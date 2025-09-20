@@ -1,0 +1,878 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sonnet - Advanced AI Assistant</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Segoe UI', sans-serif;
+            background: linear-gradient(to bottom, #0f172a, #1e293b);
+            color: #e2e8f0;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        /* Modern Header */
+        .header {
+            background: linear-gradient(to right, rgba(15, 23, 42, 0.95), rgba(30, 41, 59, 0.95));
+            backdrop-filter: blur(20px);
+            border-bottom: 1px solid rgba(6, 182, 212, 0.3);
+            padding: 16px 24px;
+            position: sticky;
+            top: 0;
+            z-index: 50;
+        }
+
+        .header-content {
+            max-width: 1200px;
+            margin: 0 auto;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            font-size: 24px;
+            font-weight: 700;
+            background: linear-gradient(to right, #06b6d4, #3b82f6);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .status-pulse {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: #00ff88;
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+
+        .header-controls {
+            display: flex;
+            gap: 12px;
+            align-items: center;
+        }
+
+        .voice-mode-toggle {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 16px;
+            background: rgba(6, 182, 212, 0.1);
+            border: 1px solid rgba(6, 182, 212, 0.3);
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-size: 14px;
+        }
+
+        .voice-mode-toggle.active {
+            background: rgba(6, 182, 212, 0.2);
+            border-color: #06b6d4;
+        }
+
+        .voice-mode-toggle:hover {
+            background: rgba(6, 182, 212, 0.15);
+        }
+
+        .toggle-switch {
+            width: 40px;
+            height: 20px;
+            background: rgba(100, 116, 139, 0.5);
+            border-radius: 10px;
+            position: relative;
+            transition: all 0.3s ease;
+        }
+
+        .toggle-switch.active {
+            background: #06b6d4;
+        }
+
+        .toggle-knob {
+            width: 16px;
+            height: 16px;
+            background: white;
+            border-radius: 50%;
+            position: absolute;
+            top: 2px;
+            left: 2px;
+            transition: all 0.3s ease;
+        }
+
+        .toggle-switch.active .toggle-knob {
+            transform: translateX(20px);
+        }
+
+        /* Main Chat Container */
+        .chat-container {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            max-width: 1024px;
+            margin: 0 auto;
+            width: 100%;
+            height: calc(100vh - 80px);
+        }
+
+        .messages-area {
+            flex: 1;
+            overflow-y: auto;
+            padding: 24px;
+            padding-bottom: 120px;
+            scroll-behavior: smooth;
+        }
+
+        .message {
+            margin-bottom: 24px;
+            display: flex;
+            gap: 12px;
+            animation: slideIn 0.3s ease-out;
+        }
+
+        @keyframes slideIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .message.user {
+            flex-direction: row-reverse;
+        }
+
+        .message-avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 16px;
+            font-weight: 600;
+            flex-shrink: 0;
+        }
+
+        .message.user .message-avatar {
+            background: linear-gradient(135deg, #06b6d4, #3b82f6);
+        }
+
+        .message.assistant .message-avatar {
+            background: linear-gradient(135deg, #00ff88, #06b6d4);
+        }
+
+        .message-content {
+            max-width: 80%;
+            padding: 16px 20px;
+            border-radius: 18px;
+            line-height: 1.6;
+            white-space: pre-wrap;
+            position: relative;
+        }
+
+        .message.user .message-content {
+            background: linear-gradient(135deg, #06b6d4, #3b82f6);
+            color: white;
+            border-bottom-right-radius: 6px;
+        }
+
+        .message.assistant .message-content {
+            background: rgba(100, 116, 139, 0.1);
+            border: 1px solid rgba(100, 116, 139, 0.2);
+            border-bottom-left-radius: 6px;
+            backdrop-filter: blur(10px);
+        }
+
+        /* Typing Indicator */
+        .typing-indicator {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 24px;
+            animation: slideIn 0.3s ease-out;
+        }
+
+        .typing-avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #00ff88, #06b6d4);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 16px;
+            font-weight: 600;
+        }
+
+        .typing-content {
+            padding: 16px 20px;
+            background: rgba(100, 116, 139, 0.1);
+            border: 1px solid rgba(100, 116, 139, 0.2);
+            border-radius: 18px;
+            border-bottom-left-radius: 6px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .typing-dots {
+            display: flex;
+            gap: 4px;
+        }
+
+        .typing-dot {
+            width: 6px;
+            height: 6px;
+            border-radius: 50%;
+            background: #06b6d4;
+            animation: typingBounce 1.4s ease-in-out infinite both;
+        }
+
+        .typing-dot:nth-child(1) { animation-delay: -0.32s; }
+        .typing-dot:nth-child(2) { animation-delay: -0.16s; }
+
+        @keyframes typingBounce {
+            0%, 80%, 100% { transform: scale(0.8); opacity: 0.5; }
+            40% { transform: scale(1); opacity: 1; }
+        }
+
+        /* Voice Status */
+        .voice-status {
+            display: none;
+            justify-content: center;
+            margin-bottom: 16px;
+            animation: slideIn 0.3s ease-out;
+        }
+
+        .voice-status.show {
+            display: flex;
+        }
+
+        .voice-status-content {
+            background: rgba(6, 182, 212, 0.1);
+            border: 1px solid rgba(6, 182, 212, 0.3);
+            border-radius: 24px;
+            padding: 12px 20px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            backdrop-filter: blur(10px);
+        }
+
+        .voice-pulse {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            background: #06b6d4;
+            animation: voicePulse 1s ease-in-out infinite;
+        }
+
+        @keyframes voicePulse {
+            0%, 100% { transform: scale(1); opacity: 1; }
+            50% { transform: scale(1.2); opacity: 0.7; }
+        }
+
+        /* Input Area */
+        .input-area {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: linear-gradient(to top, #0f172a, rgba(15, 23, 42, 0.95));
+            backdrop-filter: blur(20px);
+            border-top: 1px solid rgba(100, 116, 139, 0.2);
+            padding: 24px;
+        }
+
+        .input-container {
+            max-width: 1024px;
+            margin: 0 auto;
+            display: flex;
+            gap: 12px;
+            align-items: center;
+        }
+
+        .input-wrapper {
+            flex: 1;
+            position: relative;
+        }
+
+        .message-input {
+            width: 100%;
+            padding: 16px 60px 16px 20px;
+            background: rgba(100, 116, 139, 0.1);
+            border: 2px solid rgba(100, 116, 139, 0.2);
+            border-radius: 24px;
+            color: #e2e8f0;
+            font-size: 16px;
+            outline: none;
+            transition: all 0.3s ease;
+            backdrop-filter: blur(10px);
+        }
+
+        .message-input:focus {
+            border-color: #06b6d4;
+            background: rgba(100, 116, 139, 0.15);
+        }
+
+        .message-input::placeholder {
+            color: rgba(148, 163, 184, 0.7);
+        }
+
+        .voice-input-btn {
+            position: absolute;
+            right: 8px;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 40px;
+            height: 40px;
+            border: none;
+            border-radius: 50%;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.3s ease;
+            font-size: 16px;
+        }
+
+        .voice-input-btn.inactive {
+            background: rgba(100, 116, 139, 0.3);
+            color: rgba(148, 163, 184, 0.5);
+        }
+
+        .voice-input-btn.ready {
+            background: rgba(6, 182, 212, 0.2);
+            color: #06b6d4;
+        }
+
+        .voice-input-btn.listening {
+            background: #ef4444;
+            color: white;
+            animation: voicePulse 1s ease-in-out infinite;
+        }
+
+        .send-btn {
+            width: 48px;
+            height: 48px;
+            border: none;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #06b6d4, #3b82f6);
+            color: white;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.3s ease;
+            font-size: 18px;
+        }
+
+        .send-btn:hover {
+            transform: scale(1.05);
+            background: linear-gradient(135deg, #0891b2, #2563eb);
+        }
+
+        .send-btn:disabled {
+            background: rgba(100, 116, 139, 0.3);
+            color: rgba(148, 163, 184, 0.5);
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        /* Welcome Screen */
+        .welcome-screen {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            min-height: 50vh;
+            padding: 40px 24px;
+        }
+
+        .welcome-title {
+            font-size: 48px;
+            font-weight: 300;
+            margin-bottom: 16px;
+            background: linear-gradient(135deg, #06b6d4, #3b82f6);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .welcome-subtitle {
+            font-size: 18px;
+            color: rgba(148, 163, 184, 0.8);
+            margin-bottom: 12px;
+        }
+
+        .welcome-features {
+            font-size: 14px;
+            color: rgba(148, 163, 184, 0.6);
+            margin-top: 24px;
+            max-width: 500px;
+        }
+
+        /* Learning Status */
+        .learning-status {
+            position: fixed;
+            bottom: 100px;
+            right: 24px;
+            background: rgba(6, 182, 212, 0.1);
+            border: 1px solid rgba(6, 182, 212, 0.3);
+            border-radius: 12px;
+            padding: 12px 16px;
+            font-size: 12px;
+            color: #06b6d4;
+            backdrop-filter: blur(10px);
+            transition: all 0.3s ease;
+            opacity: 0;
+            transform: translateY(20px);
+        }
+
+        .learning-status.show {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        /* Responsive Design */
+        @media (max-width: 768px) {
+            .header {
+                padding: 12px 16px;
+            }
+
+            .logo {
+                font-size: 20px;
+            }
+
+            .welcome-title {
+                font-size: 36px;
+            }
+
+            .messages-area {
+                padding: 16px;
+                padding-bottom: 120px;
+            }
+
+            .message-content {
+                max-width: 90%;
+            }
+
+            .input-area {
+                padding: 16px;
+            }
+
+            .learning-status {
+                right: 16px;
+                bottom: 100px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <header class="header">
+        <div class="header-content">
+            <div class="logo">
+                <div class="status-pulse"></div>
+                Sonnet
+            </div>
+            <div class="header-controls">
+                <div class="voice-mode-toggle" id="voiceModeToggle">
+                    <span>Voice Mode</span>
+                    <div class="toggle-switch" id="voiceToggleSwitch">
+                        <div class="toggle-knob"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <main class="chat-container">
+        <div class="messages-area" id="messagesArea">
+            <div class="welcome-screen" id="welcomeScreen">
+                <h1 class="welcome-title">Hello, I'm Sonnet</h1>
+                <p class="welcome-subtitle">Your advanced AI assistant with continuous learning capabilities</p>
+                <div class="welcome-features">
+                    ✨ Real-time web search • 🧠 Background learning • 🎤 Voice interaction • 💾 Persistent memory
+                </div>
+            </div>
+        </div>
+
+        <div class="voice-status" id="voiceStatus">
+            <div class="voice-status-content">
+                <div class="voice-pulse"></div>
+                <span id="voiceStatusText">Listening...</span>
+            </div>
+        </div>
+    </main>
+
+    <div class="input-area">
+        <div class="input-container">
+            <div class="input-wrapper">
+                <input 
+                    type="text" 
+                    class="message-input" 
+                    id="messageInput" 
+                    placeholder="Ask Sonnet anything..."
+                >
+                <button class="voice-input-btn inactive" id="voiceInputBtn">🎤</button>
+            </div>
+            <button class="send-btn" id="sendBtn" disabled>➤</button>
+        </div>
+    </div>
+
+    <div class="learning-status" id="learningStatus">
+        🧠 Learning: Background processing active
+    </div>
+
+    <script>
+        class EnhancedSonnet {
+            constructor() {
+                this.conversationHistory = [];
+                this.voiceModeEnabled = false;
+                this.isListening = false;
+                this.isTyping = false;
+                this.isSpeaking = false;
+                this.learningTopics = [];
+                this.recognition = null;
+                this.synthesis = window.speechSynthesis;
+                
+                this.initializeElements();
+                this.setupEventListeners();
+                this.initializeSpeech();
+                this.loadVoiceMode();
+                this.startBackgroundLearning();
+                this.showWelcomeGreeting();
+            }
+
+            initializeElements() {
+                this.elements = {
+                    messagesArea: document.getElementById('messagesArea'),
+                    welcomeScreen: document.getElementById('welcomeScreen'),
+                    messageInput: document.getElementById('messageInput'),
+                    sendBtn: document.getElementById('sendBtn'),
+                    voiceInputBtn: document.getElementById('voiceInputBtn'),
+                    voiceModeToggle: document.getElementById('voiceModeToggle'),
+                    voiceToggleSwitch: document.getElementById('voiceToggleSwitch'),
+                    voiceStatus: document.getElementById('voiceStatus'),
+                    voiceStatusText: document.getElementById('voiceStatusText'),
+                    learningStatus: document.getElementById('learningStatus')
+                };
+            }
+
+            setupEventListeners() {
+                // Voice mode toggle
+                this.elements.voiceModeToggle.addEventListener('click', () => this.toggleVoiceMode());
+                
+                // Message input
+                this.elements.messageInput.addEventListener('input', (e) => {
+                    this.elements.sendBtn.disabled = !e.target.value.trim() || this.isTyping;
+                });
+                
+                this.elements.messageInput.addEventListener('keypress', (e) => {
+                    if (e.key === 'Enter' && !e.shiftKey) {
+                        e.preventDefault();
+                        this.sendMessage();
+                    }
+                });
+                
+                // Send button
+                this.elements.sendBtn.addEventListener('click', () => this.sendMessage());
+                
+                // Voice input button
+                this.elements.voiceInputBtn.addEventListener('click', () => this.handleVoiceInput());
+            }
+
+            initializeSpeech() {
+                if ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window) {
+                    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+                    this.recognition = new SpeechRecognition();
+                    this.recognition.continuous = false;
+                    this.recognition.interimResults = false;
+                    this.recognition.lang = 'en-US';
+                    
+                    this.recognition.onstart = () => {
+                        this.isListening = true;
+                        this.updateVoiceUI();
+                    };
+                    
+                    this.recognition.onresult = (event) => {
+                        if (event.results && event.results[0] && event.results[0][0]) {
+                            const transcript = event.results[0][0].transcript;
+                            this.handleSendMessageWithText(transcript);
+                        }
+                    };
+                    
+                    this.recognition.onend = () => {
+                        this.isListening = false;
+                        this.updateVoiceUI();
+                    };
+                    
+                    this.recognition.onerror = (event) => {
+                        console.error('Speech recognition error:', event.error);
+                        this.isListening = false;
+                        this.updateVoiceUI();
+                    };
+                }
+            }
+
+            loadVoiceMode() {
+                const saved = localStorage.getItem('sonnet-voice-mode');
+                this.voiceModeEnabled = saved === 'true';
+                this.updateVoiceUI();
+            }
+
+            toggleVoiceMode() {
+                this.voiceModeEnabled = !this.voiceModeEnabled;
+                localStorage.setItem('sonnet-voice-mode', this.voiceModeEnabled.toString());
+                this.updateVoiceUI();
+                
+                if (!this.voiceModeEnabled) {
+                    this.stopSpeaking();
+                    if (this.isListening && this.recognition) {
+                        this.recognition.stop();
+                    }
+                }
+            }
+
+            updateVoiceUI() {
+                // Toggle switch
+                if (this.voiceModeEnabled) {
+                    this.elements.voiceToggleSwitch.classList.add('active');
+                    this.elements.voiceModeToggle.classList.add('active');
+                } else {
+                    this.elements.voiceToggleSwitch.classList.remove('active');
+                    this.elements.voiceModeToggle.classList.remove('active');
+                }
+                
+                // Voice input button
+                this.elements.voiceInputBtn.className = 'voice-input-btn ' + 
+                    (!this.voiceModeEnabled ? 'inactive' : 
+                     this.isListening ? 'listening' : 'ready');
+                
+                // Voice status
+                if (this.isListening) {
+                    this.elements.voiceStatus.classList.add('show');
+                    this.elements.voiceStatusText.textContent = 'Listening...';
+                } else if (this.isSpeaking) {
+                    this.elements.voiceStatus.classList.add('show');
+                    this.elements.voiceStatusText.textContent = 'Sonnet is speaking...';
+                } else {
+                    this.elements.voiceStatus.classList.remove('show');
+                }
+                
+                // Input placeholder
+                this.elements.messageInput.placeholder = this.voiceModeEnabled ? 
+                    'Speak or type your message...' : 'Ask Sonnet anything...';
+            }
+
+            handleVoiceInput() {
+                if (!this.voiceModeEnabled || !this.recognition) {
+                    return;
+                }
+                
+                if (this.isListening) {
+                    this.recognition.stop();
+                } else {
+                    this.recognition.start();
+                }
+            }
+
+            showWelcomeGreeting() {
+                setTimeout(() => {
+                    const greeting = "Good day. I am Sonnet, your advanced AI assistant. How may I assist you today?";
+                    this.addMessage(greeting, 'assistant');
+                    
+                    if (this.voiceModeEnabled) {
+                        this.speakText(greeting);
+                    }
+                }, 1000);
+            }
+
+            sendMessage() {
+                const messageText = this.elements.messageInput.value.trim();
+                if (!messageText || this.isTyping) return;
+                
+                this.elements.messageInput.value = '';
+                this.elements.sendBtn.disabled = true;
+                this.handleSendMessageWithText(messageText);
+            }
+
+            async handleSendMessageWithText(messageText) {
+                if (!messageText.trim()) return;
+                
+                // Hide welcome screen
+                if (this.conversationHistory.length === 0) {
+                    this.elements.welcomeScreen.style.display = 'none';
+                }
+                
+                // Add user message
+                this.addMessage(messageText, 'user');
+                this.showTyping();
+                
+                try {
+                    // Simulate API call with enhanced prompt
+                    const response = await this.invokeAI(messageText);
+                    
+                    this.hideTyping();
+                    this.addMessage(response, 'assistant');
+                    
+                    // Store conversation
+                    this.conversationHistory.push({
+                        user: messageText,
+                        assistant: response,
+                        timestamp: new Date().toISOString()
+                    });
+                    
+                    // Speak response if voice mode enabled
+                    if (this.voiceModeEnabled) {
+                        this.speakText(response);
+                    }
+                    
+                    // Update learning
+                    this.updateLearning(messageText, response);
+                    
+                } catch (error) {
+                    this.hideTyping();
+                    this.addMessage('I apologize, but I\'m experiencing technical difficulties. Please try again.', 'assistant');
+                }
+                
+                this.elements.sendBtn.disabled = false;
+            }
+
+            async invokeAI(prompt) {
+                // Enhanced prompt with context and web search simulation
+                const enhancedPrompt = `You are Sonnet, an advanced AI assistant inspired by Jarvis from Iron Man. You are sophisticated, intelligent, and helpful.
+
+Context from recent conversation:
+${this.conversationHistory.slice(-3).map(h => `User: ${h.user}\nSonnet: ${h.assistant}`).join('\n')}
+
+Current learning topics: ${this.learningTopics.slice(-5).join(', ')}
+
+User message: "${prompt}"
+
+Respond as Sonnet with web-enhanced knowledge. Be concise but informative. Keep responses under 100 words for voice mode compatibility. If the query seems to need current information, mention that you can search the web for the latest details.`;
+
+                return new Promise((resolve) => {
+                    // Simulate API call delay
+                    setTimeout(() => {
+                        // Simulate Claude API response with web context
+                        const responses = [
+                            `I understand you're asking about "${prompt}". Based on my analysis and available information, here's what I can tell you: This appears to be a topic that would benefit from current web research. I can search for the latest information to provide you with the most up-to-date insights and practical applications.`,
+                            
+                            `Regarding "${prompt}" - this is an interesting query that intersects with several of my learning domains. Let me provide you with a comprehensive analysis drawing from my knowledge base and suggest areas where real-time web research could enhance our understanding.`,
+                            
+                            `I see you're interested in "${prompt}". This topic has evolved significantly, and I can offer both foundational insights and suggest current trends worth exploring through web search. Would you like me to research the latest developments in this area?`,
+                            
+                            `Analyzing your request about "${prompt}" - this falls within my areas of expertise in business, technology, and content strategy. I can provide strategic insights and identify opportunities for deeper research using current web sources.`
+                        ];
+                        
+                        resolve(responses[Math.floor(Math.random() * responses.length)]);
+                    }, 1500 + Math.random() * 2000);
+                });
+            }
+
+            addMessage(text, sender) {
+                const messageDiv = document.createElement('div');
+                messageDiv.className = `message ${sender}`;
+                
+                const avatar = document.createElement('div');
+                avatar.className = 'message-avatar';
+                avatar.textContent = sender === 'user' ? 'U' : 'S';
+                
+                const content = document.createElement('div');
+                content.className = 'message-content';
+                content.textContent = text;
+                
+                messageDiv.appendChild(avatar);
+                messageDiv.appendChild(content);
+                
+                this.elements.messagesArea.appendChild(messageDiv);
+                this.scrollToBottom();
+            }
+
+            showTyping() {
+                if (this.isTyping) return;
+                
+                this.isTyping = true;
+                const typingDiv = document.createElement('div');
+                typingDiv.className = 'typing-indicator';
+                typingDiv.id = 'typing-indicator';
+                
+                typingDiv.innerHTML = `
+                    <div class="typing-avatar">S</div>
+                    <div class="typing-content">
+                        <span>Sonnet is thinking</span>
+                        <div class="typing-dots">
+                            <div class="typing-dot"></div>
+                            <div class="typing-dot"></div>
+                            <div class="typing-dot"></div>
+                        </div>
+                    </div>
+                `;
+                
+                this.elements.messagesArea.appendChild(typingDiv);
+                this.scrollToBottom();
+            }
+
+            hideTyping() {
+                const typingIndicator = document.getElementById('typing-indicator');
+                if (typingIndicator) {
+                    typingIndicator.remove();
+                }
+                this.isTyping = false;
+            }
+
+            speakText(text) {
+                if (!this.voiceModeEnabled || !this.synthesis) return;
+                
+                // Stop any current speech
+                this.synthesis.cancel();
+                
+                this.isSpeaking = true;
+                this.updateVoiceUI();
+                
+                const utterance = new SpeechSynthesisUtterance(text);
+                utterance.rate = 0.9;
+                utterance.pitch = 1.0;
+                utterance.volume = 0.8;
+                
+                utterance.onend = () => {
+                    this.isSpeaking = false;
+                    this.updateVoiceUI();
+                };
+                
+                this.synthesis.speak(utterance);
+            }
+
+            stopSpeaking() {
+                if (this.synthesis) {
+                    this.synthesis.cancel();
+                    this.isSpeaking = false;
+                    this.updateVoiceUI();
+                }
+            }
+
+            updateLearning(userMessage, assistantResponse) {
+                // Extract topics from conversation
+                const topics = this.extractTopics(userMessage + ' ' + assistantResponse);
+                topics.forEach(topic => {
+                    if (!this.learningTopics.includes(topic)) {
+                        this.learningTopics.push(topic);
+                    }
+                });
